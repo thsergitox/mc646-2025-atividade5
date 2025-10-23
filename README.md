@@ -1,4 +1,4 @@
-# Activity 4
+# Activity 5
 
 This repository contains a small utility to generate a control-flow graph (CFG) image from a Python script using `staticfg` and Graphviz and three different features in "src" package.
 
