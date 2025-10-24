@@ -138,5 +138,133 @@ class TestEnergyManagementSystem:
         assert result.energy_saving_mode is False
         assert result.device_status["Aquecimento"] is True  
         assert result.device_status["Luzes"] is False        
-        assert result.device_status["TV"] is False           
+        assert result.device_status["TV"] is False    
 
+    def test_modo_normal_com_limite_de_energia(self):
+        """Test normal mode behavior and energy limit enforcement combined."""
+        system = SmartEnergyManagementSystem()
+        
+        result = system.manage_energy(
+            current_price=0.15,
+            price_threshold=0.20,
+            device_priorities={"Aquecimento": 1, "Luzes": 2, "TV": 3},
+            current_time=datetime(2024, 10, 1, 12, 0),
+            current_temperature=22.0,
+            desired_temperature_range=[20.0, 24.0],
+            energy_usage_limit=30,
+            total_energy_used_today=31,  
+            scheduled_devices=[]
+        )
+
+        
+        assert result.energy_saving_mode is False
+        assert result.device_status["Aquecimento"] is True  
+        assert result.device_status["Luzes"] is False        
+        assert result.device_status["TV"] is False         
+
+    def test_modo_noturno_ass_6am(self):
+        """Testa às 6h da manhã - limite do modo noturno."""
+        system = SmartEnergyManagementSystem()
+        result = system.manage_energy(
+            current_price=0.10,
+            price_threshold=0.20,
+            device_priorities={"Security": 1, "Luzes": 2},
+            current_time=datetime(2024, 10, 1, 6, 0), 
+            current_temperature=22.0,
+            desired_temperature_range=[20.0, 24.0],
+            energy_usage_limit=30,
+            total_energy_used_today=5,
+            scheduled_devices=[]
+        )
+        
+        assert result.device_status["Luzes"] is True
+
+    def test_temperatura_exatamente_no_lmimte_inferior(self):
+        """Testa temperatura exatamente no limite inferior."""
+        system = SmartEnergyManagementSystem()
+        result = system.manage_energy(
+            current_price=0.15,
+            price_threshold=0.20,
+            device_priorities={"Luzes": 2},
+            current_time=datetime(2024, 10, 1, 10, 0),
+            current_temperature=20.0,  
+            desired_temperature_range=[20.0, 24.0],
+            energy_usage_limit=40,
+            total_energy_used_today=10,
+            scheduled_devices=[]
+        )
+        assert result.device_status.get("Heating", False) is False  
+
+    def test_temperatura_exatamente_no_lmimte_superior(self):
+        """Testa temperatura exatamente no limite superior."""
+        system = SmartEnergyManagementSystem()
+        result = system.manage_energy(
+            current_price=0.15,
+            price_threshold=0.20,
+            device_priorities={"Luzes": 2},
+            current_time=datetime(2024, 10, 1, 10, 0),
+            current_temperature=24.0,  
+            desired_temperature_range=[20.0, 24.0],
+            energy_usage_limit=40,
+            total_energy_used_today=10,
+            scheduled_devices=[]
+        )
+        assert result.device_status.get("Cooling", False) is False  
+
+    def test_temperatura_para_desligar_Heating_e_Cooling(self):
+        """Testa que Heating e Cooling são desligados quando temperatura está ok."""
+        system = SmartEnergyManagementSystem()
+        
+        result = system.manage_energy(
+            current_price=0.15,
+            price_threshold=0.20,
+            device_priorities={"Luzes": 2, "Heating": 1, "Cooling": 1},
+            current_time=datetime(2024, 10, 1, 10, 0),
+            current_temperature=22.0,  # dentro da faixa
+            desired_temperature_range=[20.0, 24.0],
+            energy_usage_limit=40,
+            total_energy_used_today=10,
+            scheduled_devices=[]
+        )
+       
+        assert "Heating" in result.device_status
+        assert "Cooling" in result.device_status
+        assert result.device_status["Heating"] is False
+        assert result.device_status["Cooling"] is False
+
+    def test_energia_exatamente_no_limite(self):
+        """Testa quando energia usada é exatamente igual ao limite."""
+        system = SmartEnergyManagementSystem()
+        result = system.manage_energy(
+            current_price=0.15,
+            price_threshold=0.20,
+            device_priorities={"Aquecimento": 1, "Luzes": 2},
+            current_time=datetime(2024, 10, 1, 12, 0),
+            current_temperature=22.0,
+            desired_temperature_range=[20.0, 24.0],
+            energy_usage_limit=30,
+            total_energy_used_today=30,  
+            scheduled_devices=[]
+        )
+        
+        assert result.device_status["Luzes"] is False
+
+    def test_reducao_de_energia_para_abaixo_do_limite(self):
+        """Testa que o loop para quando fica abaixo do limite."""
+        system = SmartEnergyManagementSystem()
+        result = system.manage_energy(
+            current_price=0.15,
+            price_threshold=0.20,
+            device_priorities={"Device1": 2, "Device2": 3, "Device3": 4, "Priority1": 1},
+            current_time=datetime(2024, 10, 1, 12, 0),
+            current_temperature=22.0,
+            desired_temperature_range=[20.0, 24.0],
+            energy_usage_limit=30,
+            total_energy_used_today=33,  # 3 acima do limite
+            scheduled_devices=[]
+        )
+        
+        assert result.device_status["Device1"] is False
+        assert result.device_status["Device2"] is False
+        assert result.device_status["Device3"] is False
+        assert result.total_energy_used == 30  # exatamente no limite
