@@ -143,221 +143,151 @@ class TestFraudDetectionSystem:
         assert result.is_blocked is True
         assert result.risk_score == 100
         # A regra da blacklist por si só não marca como fraude, apenas bloqueia
-        assert result.is_fraudulent is False
+        assert result.is_fraudulent is False 
 
-    def test_limit_not_fraud_amount(self):
+    def test_limit_amount_10k_and_count_10(self):
         """
-        Mata o Mutante 133 (>= 10000).
-        O original (>) não deve marcar 10.000 como fraude.
-        O mutante (>=) irá marcar como fraude.
-        """
-        current_transaction = Transaction(
-            amount=10000.00,
-            timestamp=self.now,
-            location="Brasil"
-        )
-        result = self.system.check_for_fraud(current_transaction, [], self.blacklisted_locations)
+        Mata:
+        - M133 (amount >= 10000) -> Daria fraude
+        - M142 (count = 1) -> Contaria 11, daria bloqueio
+        - M154 (count >= 10) -> Daria bloqueio
         
-        # Original deve ser False. Mutante será True.
+        Teste: Valor exatamente no limite (10000) e contagem exatamente no limite (10).
+        Original: Não é fraude (só > 10k), não bloqueia (só > 10).
+        """
+        current_transaction = Transaction(10000.00, self.now, "Brasil")
+        previous_transactions = [
+            Transaction(50.0, self.now - timedelta(minutes=10), "Brasil") for _ in range(10)
+        ]
+        
+        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
+        
         assert result.is_fraudulent is False
+        assert result.is_blocked is False
         assert result.risk_score == 0
 
-    def test_limit_fraud_amount(self):
+    def test_limit_amount_10001_and_count_6(self):
         """
-        Mata o Mutante 134 (> 10001).
-        O original (> 10000) deve marcar 10.001 como fraude.
-        O mutante (> 10001) não irá marcar.
-        """
-        current_transaction = Transaction(
-            amount=10001.00,
-            timestamp=self.now,
-            location="Brasil"
-        )
-        result = self.system.check_for_fraud(current_transaction, [], self.blacklisted_locations)
+        Mata:
+        - M134 (amount > 10001) -> Não daria fraude
+        - M153 (count += 2) -> Contaria 12, daria bloqueio
         
-        # Original deve ser True. Mutante será False.
-        assert result.is_fraudulent is True
-        assert result.risk_score == 50
-
-    def test_previous_transaction_equals_10(self):
+        Teste: Valor logo acima do limite (10001) e contagem baixa (6).
+        Original: É fraude (score=50), não bloqueia (6 tx).
         """
-        Mata Mutante 142 (count=1) e Mutante 154 (>= 10).
-        Com 10 transações:
-        - Original (> 10) não bloqueia (10 > 10 é Falso).
-        - Mutante 142 (count=1) conta 11 e bloqueia (11 > 10 é Verdadeiro).
-        - Mutante 154 (>= 10) bloqueia (10 >= 10 é Verdadeiro).
-        """
-        current_transaction = Transaction(500.0, self.now, "Brasil")
-        previous_transactions = [
-            Transaction(50.0, self.now - timedelta(minutes=10), "Brasil") for _ in range(10)
-        ]
-        
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
-        
-        # Original não bloqueia. Mutantes 142 e 154 bloqueiam.
-        assert result.is_blocked is False
-
-    def test_count_ignore_tx_outside_60_min(self):
-        """
-        Mata Mutante 147 (.../61).
-        Usa 10 tx recentes + 1 tx de 60.5 minutos atrás.
-         Original (.../60) não conta a tx de 60.5 min (total 10). Não bloqueia.
-        - Mutante (.../61) conta a tx (3630/61 = 59.5), (total 11). Bloqueia.
-        """
-        current_transaction = Transaction(500.0, self.now, "Brasil")
-        # 10 transações recentes
-        previous_transactions = [
-            Transaction(50.0, self.now - timedelta(minutes=10), "Brasil") for _ in range(10)
-        ]
-        # 1 transação de 60.5 minutos (3630 segundos)
-        previous_transactions.append(
-            Transaction(50.0, self.now - timedelta(minutes=60, seconds=30), "Brasil")
-        )
-        
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
-        
-        # Original (10 tx) não bloqueia. Mutante (11 tx) bloqueia.
-        assert result.is_blocked is False
-
-    def test_count_include_tx_equals_60_min(self):
-        """
-        Mata Mutante 149 (< 60).
-        Usa 11 transações exatamente de 60 minutos atrás.
-        - Original (<= 60) conta todas (total 11). Bloqueia.
-        - Mutante (< 60) não conta nenhuma (total 0). Não bloqueia.
-        """
-        current_transaction = Transaction(500.0, self.now, "Brasil")
-        previous_transactions = [
-            Transaction(50.0, self.now - timedelta(minutes=60), "Brasil") for _ in range(11)
-        ]
-        
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
-        
-        # Original (11 tx) bloqueia. Mutante (0 tx) não bloqueia.
-        assert result.is_blocked is True
-
-    def test_count_ignore_tx_equals_61_min(self):
-        """
-        Mata Mutante 150 (<= 61).
-        Usa 11 transações de 61 minutos atrás.
-        - Original (<= 60) não conta nenhuma (total 0). Não bloqueia.
-        - Mutante (<= 61) conta todas (total 11). Bloqueia.
-        """
-        current_transaction = Transaction(500.0, self.now, "Brasil")
-        previous_transactions = [
-            Transaction(50.0, self.now - timedelta(minutes=61), "Brasil") for _ in range(11)
-        ]
-        
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
-
-        # Original (0 tx) não bloqueia. Mutante (11 tx) bloqueia.
-        assert result.is_blocked is False
-
-    def test_count_6_tx_not_blocked(self):
-        """
-        Mata Mutante 153 (+= 2).
-        Usa 6 transações recentes.
-        - Original (+= 1) conta 6. Não bloqueia.
-        - Mutante (+= 2) conta 12. Bloqueia.
-        """
-        current_transaction = Transaction(500.0, self.now, "Brasil")
+        current_transaction = Transaction(10001.00, self.now, "Brasil")
         previous_transactions = [
             Transaction(50.0, self.now - timedelta(minutes=10), "Brasil") for _ in range(6)
         ]
-        
+
         result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
         
-        # Original (6 tx) não bloqueia. Mutante (12 tx) bloqueia.
+        assert result.is_fraudulent is True
         assert result.is_blocked is False
+        assert result.risk_score == 50
 
-    def test_score_sum_rule1_and_rule2(self):
+    def test_score_sum_all_rules_active(self):
         """
-        Mata Mutante 158 (risk_score = 30).
-        Combina Regra 1 (Valor > 10k, score=50) e Regra 2 (Contagem > 10, score+=30).
-        - Original: risk_score = 50 + 30 = 80.
-        - Mutante: risk_score = 50, depois risk_score = 30. (Resultado 30).
+        Mata:
+        - M158 (R2: score = 30) -> Daria score final 50 (30+20)
+        - M177 (R3: score = 20) -> Daria score final 20
+        
+        Teste: Combina as 3 regras que somam score.
+        Original: R1 (50) + R2 (30) + R3 (20) = 100
         """
-        current_transaction = Transaction(15000.0, self.now, "Brasil") # Regra 1
+        current_transaction = Transaction(15000.0, self.now, "Brasil") # R1
         previous_transactions = [
-            Transaction(50.0, self.now - timedelta(minutes=10), "Brasil") for _ in range(11) # Regra 2
+            # R3: Última tx em local diferente e < 30 min
+            Transaction(100.0, self.now - timedelta(minutes=15), "EUA")
         ]
+        # R2: Adiciona 10 txs mais antigas para totalizar 11
+        previous_transactions.extend(
+            [Transaction(50.0, self.now - timedelta(minutes=20), "Brasil") for _ in range(10)]
+        )
         
         result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
         
         assert result.is_fraudulent is True
         assert result.is_blocked is True
-        # Original == 80. Mutante == 30.
-        assert result.risk_score == 80
+        assert result.risk_score == 100 # 50 + 30 + 20
 
-    def test_location_ignore_change_at_30_1_min(self):
+    def test_limit_time_exact_60_and_30_min(self):
         """
-        Mata Mutante 167 (local .../61).
-        Usa 1 tx em local diferente há 30.1 minutos (1806 seg).
-        - Original (.../60): 1806/60 = 30.1. (30.1 < 30 é Falso). Não é fraude.
-        - Mutante (.../61): 1806/61 = 29.6. (29.6 < 30 é Verdadeiro). É fraude.
+        Mata:
+        - M149 (R2: < 60) -> Não contaria as 11 txs, não bloquearia
+        - M169 (R3: <= 30) -> Marcaria fraude
+        
+        Teste: Limites exatos de tempo. 11 txs @ 60 min e 1 tx @ 30 min (loc diferente).
+        Original: R2 conta (<= 60), R3 não conta (< 30).
         """
         current_transaction = Transaction(500.0, self.now, "Brasil")
         previous_transactions = [
-            Transaction(100.0, self.now - timedelta(minutes=30, seconds=6), "EUA")
-        ]
-        
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
-        
-        # Original não é fraude. Mutante é fraude.
-        assert result.is_fraudulent is False
-        assert result.risk_score == 0
-
-    def test_location_ignore_change_equals_30_min(self):
-        """
-        Mata Mutante 169 (local <= 30).
-        Usa 1 tx em local diferente há exatamente 30 minutos.
-        - Original (< 30): (30.0 < 30 é Falso). Não é fraude.
-        - Mutante (<= 30): (30.0 <= 30 é Verdadeiro). É fraude.
-        """
-        current_transaction = Transaction(500.0, self.now, "Brasil")
-        previous_transactions = [
+            # R3: Exatamente 30 min, local diferente
             Transaction(100.0, self.now - timedelta(minutes=30), "EUA")
         ]
-        
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
-        
-        # Original não é fraude. Mutante é fraude.
-        assert result.is_fraudulent is False
-        assert result.risk_score == 0
+        # R2: Exatamente 60 min, 10 txs (total 11 com a de cima)
+        previous_transactions.extend(
+            [Transaction(50.0, self.now - timedelta(minutes=60), "Brasil") for _ in range(10)]
+        )
 
-    def test_location_ignore_change_at_30_5_min(self):
+        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
+
+        # Original: R2 (Bloqueia), R3 (Não é fraude)
+        assert result.is_blocked is True
+        assert result.is_fraudulent is False # A fraude da R3 não é ativada
+        assert result.risk_score == 30
+
+    def test_limit_time_division_60_5_and_30_1_min(self):
         """
-        Mata Mutante 170 (local < 31).
-        Usa 1 tx em local diferente há 30.5 minutos.
-        - Original (< 30): (30.5 < 30 é Falso). Não é fraude.
-        - Mutante (< 31): (30.5 < 31 é Verdadeiro). É fraude.
+        Mata:
+        - M147 (R2: ... / 61) -> Contaria 11 txs (59.5 min), bloquearia
+        - M167 (R3: ... / 61) -> Contaria 29.6 min, marcaria fraude
+        
+        Teste: Limites de divisão de tempo (60.5 min e 30.1 min).
+        Original: R2 não conta 60.5 min. R3 não conta 30.1 min.
         """
         current_transaction = Transaction(500.0, self.now, "Brasil")
         previous_transactions = [
-            Transaction(100.0, self.now - timedelta(minutes=30, seconds=30), "EUA")
+            # R3: 30.1 min, local diferente
+            Transaction(100.0, self.now - timedelta(minutes=30, seconds=6), "EUA")
         ]
-        
+        # R2: 10 txs recentes + 1 tx @ 60.5 min
+        previous_transactions.extend(
+            [Transaction(50.0, self.now - timedelta(minutes=10), "Brasil") for _ in range(10)] # 10 txs
+        )
+        previous_transactions.append(
+            Transaction(50.0, self.now - timedelta(minutes=60, seconds=30), "Brasil") # 1 tx @ 60.5
+        )
+
         result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
-        
-        # Original não é fraude. Mutante é fraude.
+
+        # Original: R2 (Não bloqueia, 10 txs), R3 (Não é fraude)
+        assert result.is_blocked is False
         assert result.is_fraudulent is False
         assert result.risk_score == 0
 
-    def test_score_sum_rule1_and_rule3(self):
+    def test_limit_time_outside_61_and_30_5_min(self):
         """
-        Mata Mutante 177 (risk_score = 20).
-        Combina Regra 1 (Valor > 10k, score=50) e Regra 3 (Local, score+=20).
-        - Original: risk_score = 50 + 20 = 70.
-        - Mutante: risk_score = 50, depois risk_score = 20. (Resultado 20).
+        Mata:
+        - M150 (R2: <= 61) -> Contaria 11 txs, bloquearia
+        - M170 (R3: < 31) -> Marcaria fraude
+        
+        Teste: Limites fora da janela (61 min e 30.5 min).
+        Original: R2 não conta (<= 60). R3 não conta (< 30).
         """
-        current_transaction = Transaction(15000.0, self.now, "Brasil") # Regra 1
+        current_transaction = Transaction(500.0, self.now, "Brasil")
         previous_transactions = [
-            Transaction(100.0, self.now - timedelta(minutes=15), "EUA") # Regra 3
+            # R3: 30.5 min, local diferente
+            Transaction(100.0, self.now - timedelta(minutes=30, seconds=30), "EUA")
         ]
-        
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
-        
-        assert result.is_fraudulent is True
-        # Original == 70. Mutante == 20.
-        assert result.risk_score == 70
+        # R2: 11 txs @ 61 min
+        previous_transactions.extend(
+            [Transaction(50.0, self.now - timedelta(minutes=61), "Brasil") for _ in range(10)]
+        )
 
+        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
+
+        # Original: R2 (Não bloqueia, 0 txs), R3 (Não é fraude)
+        assert result.is_blocked is False
+        assert result.is_fraudulent is False
+        assert result.risk_score == 0
