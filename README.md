@@ -1,4 +1,4 @@
-# Activity 4
+# Activity 5
 
 This repository contains a small utility to generate a control-flow graph (CFG) image from a Python script using `staticfg` and Graphviz and three different features in "src" package.
 
@@ -48,6 +48,12 @@ On macOS (Homebrew):
 brew install graphviz
 ```
 
+On Arch Linux:
+
+```bash
+sudo pacman -S graphviz
+```
+
 
 ## Running `generate_graph.py`
 
@@ -75,7 +81,7 @@ This will create the rendered image at `cfg/energy_cfg.png` (the script uses `cf
 You can run the test suite with coverage reporting using `pytest` and the `--cov` plugin (because of the lib `pytest-cov`). For example, to measure coverage for the `SmartEnergyManagementSystem` class (module path `src.energy.EnergyManagementSystem`), run:
 
 ```bash
-pytest --cov=src.energy.EnergyManagementSystem --cov-report=html:coverage_report
+pytest --cov=src.energy.EnergyManagementSystem --cov-report=html:coverage_report --cov-branch
 ```
 
 This command will:

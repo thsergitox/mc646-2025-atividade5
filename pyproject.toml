@@ -13,3 +13,6 @@ paths_to_mutate = "src/energy/EnergyManagementResult.py,src/flight/FlightBooking
 
 [tool.setuptools]
 packages = ["src"]
+
+[tool.mutmut]
+paths_to_mutate = "src/energy/EnergyManagementSystem.py,src/flight/FlightBookingSystem.py,src/fraud/FraudDetectionSystem.py"
