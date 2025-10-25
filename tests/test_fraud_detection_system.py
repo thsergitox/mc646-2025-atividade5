@@ -303,3 +303,55 @@ class TestFraudDetectionSystem:
         assert result.is_blocked is False
         assert result.is_fraudulent is False
         assert result.risk_score == 0
+
+    def test_mutant_167_divisao_61_mata_regra_localizacao(self):
+        """
+        Mata mutante 167: alteração na divisão de tempo de 60 → 61.
+        Uma transação 29 minutos atrás em local diferente deve ser fraude.
+        """
+        current_transaction = Transaction(500.0, self.now, "Brasil")
+        previous_transactions = [
+            Transaction(100.0, self.now - timedelta(minutes=29), "EUA")
+        ]
+        blacklisted_locations = []
+
+        result = self.system.check_for_fraud(current_transaction, previous_transactions, blacklisted_locations)
+
+        # Espera fraude (R3)
+        assert result.is_fraudulent is True
+        assert result.verification_required is True
+        assert result.risk_score == 20
+
+    def test_mutant_169_limite_30_min_nao_fraude(self):
+        """
+        Mata mutante 169: altera <30 para <=30.
+        Transação exatamente 30 min atrás não deve ser fraude.
+        """
+        current_transaction = Transaction(500.0, self.now, "Brasil")
+        previous_transactions = [
+            Transaction(100.0, self.now - timedelta(minutes=30), "EUA")
+        ]
+        blacklisted_locations = []
+
+        result = self.system.check_for_fraud(current_transaction, previous_transactions, blacklisted_locations)
+
+        # Espera não ser fraude
+        assert result.is_fraudulent is False
+        assert result.risk_score == 0
+
+    def test_mutant_170_limite_30_5_min_nao_fraude(self):
+        """
+        Mata mutante 170: altera <30 para <31.
+        Transação 30.5 min atrás (30 min e 30 seg) não deve ser fraude.
+        """
+        current_transaction = Transaction(500.0, self.now, "Brasil")
+        previous_transactions = [
+            Transaction(100.0, self.now - timedelta(minutes=30, seconds=30), "EUA")
+        ]
+        blacklisted_locations = []
+
+        result = self.system.check_for_fraud(current_transaction, previous_transactions, blacklisted_locations)
+
+        # Espera não ser fraude
+        assert result.is_fraudulent is False
+        assert result.risk_score == 0
