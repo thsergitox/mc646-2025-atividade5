@@ -160,7 +160,23 @@ class TestEnergyManagementSystem:
         assert result.energy_saving_mode is False
         assert result.device_status["Aquecimento"] is True  
         assert result.device_status["Luzes"] is False        
-        assert result.device_status["TV"] is False         
+        assert result.device_status["TV"] is False        
+    
+    def test_price_exatamente_igual_ao_threshold(self):
+        """Testa quando o preço é exatamente igual ao threshold."""
+        system = SmartEnergyManagementSystem()
+        result = system.manage_energy(
+            current_price=0.20,  # exatamente igual ao threshold
+            price_threshold=0.20,
+            device_priorities={"Luzes": 2, "Aquecimento": 1},
+            current_time=datetime(2024, 10, 1, 10, 0),
+            current_temperature=22.0,
+            desired_temperature_range=[20.0, 24.0],
+            energy_usage_limit=40,
+            total_energy_used_today=10,
+            scheduled_devices=[]
+        )
+        assert result.energy_saving_mode is False  # deve ser False com >
 
     def test_modo_noturno_ass_6am(self):
         """Testa às 6h da manhã - limite do modo noturno."""
