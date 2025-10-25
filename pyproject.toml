@@ -2,6 +2,12 @@
 name = "src"
 version = "0.1.0"
 
+dependencies = [
+	"pytest==8.4.2",
+	"staticfg==0.9.5",
+	"pytest-cov==7.0.0",
+]
+
 [tool.setuptools]
 packages = ["src"]
 
