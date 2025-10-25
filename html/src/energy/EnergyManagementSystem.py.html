@@ -1,4 +1,4 @@
-<html><body><h1>src/energy/EnergyManagementSystem.py</h1>Killed 56 out of 69 mutants<h2>Timeouts</h2>Mutants that made the test suite take a lot longer so the tests were killed.<h3>Mutant 50</h3><pre>--- src/energy/EnergyManagementSystem.py
+<html><body><h1>src/energy/EnergyManagementSystem.py</h1>Killed 61 out of 69 mutants<h2>Timeouts</h2>Mutants that made the test suite take a lot longer so the tests were killed.<h3>Mutant 50</h3><pre>--- src/energy/EnergyManagementSystem.py
 +++ src/energy/EnergyManagementSystem.py
 @@ -50,7 +50,7 @@
              device_status["Cooling"] = False
@@ -42,18 +42,7 @@
                       break
                   device_status[device] = False
                   total_energy_used_today -= 1
-</pre><h2>Survived</h2>Survived mutation testing. These mutants show holes in your test suite.<h3>Mutant 6</h3><pre>--- src/energy/EnergyManagementSystem.py
-+++ src/energy/EnergyManagementSystem.py
-@@ -21,7 +21,7 @@
-         temperature_regulation_active = False
- 
-         
--        if current_price > price_threshold:
-+        if current_price >= price_threshold:
-             energy_saving_mode = True
-             for device, priority in device_priorities.items():
-                 if priority > 1:  
-</pre><h3>Mutant 51</h3><pre>--- src/energy/EnergyManagementSystem.py
+</pre><h2>Survived</h2>Survived mutation testing. These mutants show holes in your test suite.<h3>Mutant 51</h3><pre>--- src/energy/EnergyManagementSystem.py
 +++ src/energy/EnergyManagementSystem.py
 @@ -53,7 +53,7 @@
          while total_energy_used_today >= energy_usage_limit and devices_were_on:
@@ -97,48 +86,4 @@
                   device_status[device] = False
                   total_energy_used_today -= 1
          
-</pre><h2>Suspicious</h2>Mutants that made the test suite take longer, but otherwise seemed ok<h3>Mutant 45</h3><pre>--- src/energy/EnergyManagementSystem.py
-+++ src/energy/EnergyManagementSystem.py
-@@ -47,7 +47,7 @@
-             temperature_regulation_active = True
-         else:
-             device_status["Heating"] = False
--            device_status["Cooling"] = False
-+            device_status["Cooling"] = True
-         
-         devices_were_on = True
-         while total_energy_used_today >= energy_usage_limit and devices_were_on:
-</pre><h3>Mutant 46</h3><pre>--- src/energy/EnergyManagementSystem.py
-+++ src/energy/EnergyManagementSystem.py
-@@ -47,7 +47,7 @@
-             temperature_regulation_active = True
-         else:
-             device_status["Heating"] = False
--            device_status["Cooling"] = False
-+            device_status["Cooling"] = None
-         
-         devices_were_on = True
-         while total_energy_used_today >= energy_usage_limit and devices_were_on:
-</pre><h3>Mutant 49</h3><pre>--- src/energy/EnergyManagementSystem.py
-+++ src/energy/EnergyManagementSystem.py
-@@ -50,7 +50,7 @@
-             device_status["Cooling"] = False
-         
-         devices_were_on = True
--        while total_energy_used_today >= energy_usage_limit and devices_were_on:
-+        while total_energy_used_today > energy_usage_limit and devices_were_on:
-             devices_to_turn_off = [
-                 device for device, priority in device_priorities.items()
-                 if device_status.get(device, False) and priority > 1
-</pre><h3>Mutant 65</h3><pre>--- src/energy/EnergyManagementSystem.py
-+++ src/energy/EnergyManagementSystem.py
-@@ -62,7 +62,7 @@
-                  if total_energy_used_today < energy_usage_limit:
-                      break
-                  device_status[device] = False
--                 total_energy_used_today -= 1
-+                 total_energy_used_today += 1
-         
-         
-         for schedule in scheduled_devices:
 </pre></body></html>
