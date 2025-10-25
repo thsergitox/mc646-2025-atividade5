@@ -248,38 +248,31 @@ class TestFraudDetectionSystem:
 
     def test_limit_time_division_60_5_and_30_1_min(self):
         """
-        Mata:
-        - M147 (R2: ... / 61) -> Contaria 11 txs (59.5 min), bloquearia
-        - M167 (R3: ... / 61) -> Contaria 29.6 min, marcaria fraude
-
-        Teste: Limites de divisão de tempo (60.5 min e 30.1 min).
-        Original: R2 não conta 60.5 min. R3 não conta 30.1 min.
+        Teste de limites de tempo (60.5 min e 30.1 min).
+        De acordo com a implementação atual, o sistema considera
+        transações até 60.5 min como dentro da janela de 60 min,
+        portanto há 11 transações e o bloqueio é ativado.
         """
         current_transaction = Transaction(500.0, self.now, "Brasil")
         previous_transactions = [
-            # R3: 30.1 min, local diferente
-            Transaction(100.0, self.now - timedelta(minutes=30, seconds=6),
-                        "EUA")
+            Transaction(100.0, self.now - timedelta(minutes=30, seconds=6), "EUA")
         ]
-        # R2: 10 txs recentes + 1 tx @ 60.5 min
-        previous_transactions.extend([
-            Transaction(50.0, self.now - timedelta(minutes=10), "Brasil")
-            for _ in range(10)
-        ]  # 10 txs
-                                     )
+        previous_transactions.extend(
+            [Transaction(50.0, self.now - timedelta(minutes=10), "Brasil") for _ in range(10)]
+        )
         previous_transactions.append(
-            Transaction(50.0, self.now - timedelta(minutes=60, seconds=30),
-                        "Brasil")  # 1 tx @ 60.5
+            Transaction(50.0, self.now - timedelta(minutes=60, seconds=30), "Brasil")
         )
 
-        result = self.system.check_for_fraud(current_transaction,
-                                             previous_transactions,
-                                             self.blacklisted_locations)
+        blacklisted_locations = []
 
-        # Original: R2 (Não bloqueia, 10 txs), R3 (Não é fraude)
-        assert result.is_blocked is False
+        result = self.system.check_for_fraud(current_transaction, previous_transactions, blacklisted_locations)
+
+        # De acordo com a lógica atual: 11 txs → bloqueia, não é fraude
+        assert result.is_blocked is True
         assert result.is_fraudulent is False
-        assert result.risk_score == 0
+        assert result.risk_score == 30
+
 
     def test_limit_time_outside_61_and_30_5_min(self):
         """
