@@ -195,21 +195,22 @@ class TestFraudDetectionSystem:
         Teste: Combina as 3 regras que somam score.
         Original: R1 (50) + R2 (30) + R3 (20) = 100
         """
-        current_transaction = Transaction(15000.0, self.now, "Brasil") # R1
-        previous_transactions = [
-            # R3: Última tx em local diferente e < 30 min
-            Transaction(100.0, self.now - timedelta(minutes=15), "EUA")
-        ]
-        # R2: Adiciona 10 txs mais antigas para totalizar 11
-        previous_transactions.extend(
-            [Transaction(50.0, self.now - timedelta(minutes=20), "Brasil") for _ in range(10)]
-        )
+        current_transaction = Transaction(15000.0, self.now, "Brasil")  # R1
+        previous_transactions =[]
         
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, self.blacklisted_locations)
-        
+        for _ in range(10):
+            previous_transactions.append(
+                Transaction(50.0, self.now - timedelta(minutes=60), "Brasil"))
+            
+        previous_transactions.append(      Transaction(15000, self.now - timedelta(minutes=15), "EUA"))
+
+        result = self.system.check_for_fraud(current_transaction,
+                                             previous_transactions,
+                                             self.blacklisted_locations)
+
         assert result.is_fraudulent is True
         assert result.is_blocked is True
-        assert result.risk_score == 100 # 50 + 30 + 20
+        assert result.risk_score == 100  #
 
     def test_limit_time_exact_60_and_30_min(self):
         """
