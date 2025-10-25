@@ -16,6 +16,8 @@ class TestFraudDetectionSystem:
         """
         self.system = FraudDetectionSystem()
         self.now = datetime.now()
+        self.blacklisted_locations = []
+
 
     def test_caso_1_valor_elevado(self):
         """
