@@ -1,11 +1,18 @@
+<<<<<<< HEAD
 <html><body><h1>src/fraud/FraudDetectionSystem.py</h1>Killed 49 out of 60 mutants<h2>Survived</h2>Survived mutation testing. These mutants show holes in your test suite.<h3>Mutant 139</h3><pre>--- src/fraud/FraudDetectionSystem.py
 +++ src/fraud/FraudDetectionSystem.py
 @@ -16,7 +16,7 @@
+=======
+<html><body><h1>src/fraud/FraudDetectionSystem.py</h1>Killed 59 out of 60 mutants<h2>Survived</h2>Survived mutation testing. These mutants show holes in your test suite.<h3>Mutant 139</h3><pre>--- src/fraud/FraudDetectionSystem.py
++++ src/fraud/FraudDetectionSystem.py
+@@ -22,7 +22,7 @@
+>>>>>>> actividade5-fraud
          if current_transaction.amount > 10000:
              is_fraudulent = True
              verification_required = True
 -            risk_score += 50
 +            risk_score = 50
+<<<<<<< HEAD
          recent_transaction_count = 0
          for transaction in previous_transactions:
              time_difference = current_transaction.timestamp - transaction.timestamp
@@ -119,4 +126,9 @@
          
          if recent_transaction_count > 10:
              is_blocked = True
+=======
+ 
+         # 2. Verifica por transações excessivas na última hora
+         recent_transaction_count = 0
+>>>>>>> actividade5-fraud
 </pre></body></html>
