@@ -1,4 +1,4 @@
-<html><body><h1>src/fraud/FraudDetectionSystem.py</h1>Killed 57 out of 60 mutants<h2>Survived</h2>Survived mutation testing. These mutants show holes in your test suite.<h3>Mutant 139</h3><pre>--- src/fraud/FraudDetectionSystem.py
+<html><body><h1>src/fraud/FraudDetectionSystem.py</h1>Killed 59 out of 60 mutants<h2>Survived</h2>Survived mutation testing. These mutants show holes in your test suite.<h3>Mutant 139</h3><pre>--- src/fraud/FraudDetectionSystem.py
 +++ src/fraud/FraudDetectionSystem.py
 @@ -16,7 +16,7 @@
          if current_transaction.amount > 10000:
@@ -9,26 +9,4 @@
          recent_transaction_count = 0
          for transaction in previous_transactions:
              time_difference = current_transaction.timestamp - transaction.timestamp
-</pre><h2>Suspicious</h2>Mutants that made the test suite take longer, but otherwise seemed ok<h3>Mutant 142</h3><pre>--- src/fraud/FraudDetectionSystem.py
-+++ src/fraud/FraudDetectionSystem.py
-@@ -17,7 +17,7 @@
-             is_fraudulent = True
-             verification_required = True
-             risk_score += 50
--        recent_transaction_count = 0
-+        recent_transaction_count = 1
-         for transaction in previous_transactions:
-             time_difference = current_transaction.timestamp - transaction.timestamp
-             time_diff_minutes = time_difference.total_seconds() / 60
-</pre><h3>Mutant 147</h3><pre>--- src/fraud/FraudDetectionSystem.py
-+++ src/fraud/FraudDetectionSystem.py
-@@ -20,7 +20,7 @@
-         recent_transaction_count = 0
-         for transaction in previous_transactions:
-             time_difference = current_transaction.timestamp - transaction.timestamp
--            time_diff_minutes = time_difference.total_seconds() / 60
-+            time_diff_minutes = time_difference.total_seconds() / 61
-             if time_diff_minutes <= 60:
-                 recent_transaction_count += 1
-         
 </pre></body></html>
