@@ -159,17 +159,10 @@ class TestFraudDetectionSystem:
             for _ in range(10)
         ]
 
-<<<<<<< HEAD
-        blacklisted_locations = []
-        
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, blacklisted_locations)
-        
-=======
         result = self.system.check_for_fraud(current_transaction,
                                              previous_transactions,
                                              self.blacklisted_locations)
 
->>>>>>> actividade5-fraud
         assert result.is_fraudulent is False
         assert result.is_blocked is False
         assert result.risk_score == 0
@@ -189,46 +182,16 @@ class TestFraudDetectionSystem:
             for _ in range(6)
         ]
 
-<<<<<<< HEAD
-        blacklisted_locations = []
-
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, blacklisted_locations)
-        
-=======
         result = self.system.check_for_fraud(current_transaction,
                                              previous_transactions,
                                              self.blacklisted_locations)
 
->>>>>>> actividade5-fraud
         assert result.is_fraudulent is True
         assert result.is_blocked is False
         assert result.risk_score == 50
 
     def test_score_sum_all_rules_active(self):
         """
-<<<<<<< HEAD
-        Combina as 3 regras que somam score.
-        O sistema atual só considera a última transação
-        para a verificação de mudança de localização (R3),
-        portanto, o score final esperado é 80 (R1 + R2).
-        """
-        current_transaction = Transaction(15000.0, self.now, "Brasil")  # R1
-        previous_transactions = [
-            Transaction(100.0, self.now - timedelta(minutes=15), "EUA")
-        ]
-        previous_transactions.extend(
-            [Transaction(50.0, self.now - timedelta(minutes=20), "Brasil") for _ in range(10)]
-        )
-
-        blacklisted_locations = []
-
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, blacklisted_locations)
-
-        assert result.is_fraudulent is True
-        assert result.is_blocked is True
-        assert result.risk_score == 80  # R1 (50) + R2 (30)
-
-=======
         Mata:
         - M158 (R2: score = 30) -> Daria score final 50 (30+20)
         - M177 (R3: score = 20) -> Daria score final 20
@@ -253,7 +216,6 @@ class TestFraudDetectionSystem:
         assert result.is_fraudulent is True
         assert result.is_blocked is True
         assert result.risk_score == 100  #
->>>>>>> actividade5-fraud
 
     def test_limit_time_exact_60_and_30_min(self):
         """
@@ -275,15 +237,9 @@ class TestFraudDetectionSystem:
             for _ in range(10)
         ])
 
-<<<<<<< HEAD
-        blacklisted_locations = []
-
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, blacklisted_locations)
-=======
         result = self.system.check_for_fraud(current_transaction,
                                              previous_transactions,
                                              self.blacklisted_locations)
->>>>>>> actividade5-fraud
 
         # Original: R2 (Bloqueia), R3 (Não é fraude)
         assert result.is_blocked is True
@@ -292,17 +248,10 @@ class TestFraudDetectionSystem:
 
     def test_limit_time_division_60_5_and_30_1_min(self):
         """
-<<<<<<< HEAD
-        Testa os limites de tempo (60.5 min e 30.1 min).
-        O sistema considera transações com até 60.5 min
-        dentro da janela de 60 min devido ao arredondamento.
-        Portanto, há 11 transações recentes e o bloqueio é ativado.
-=======
         Teste de limites de tempo (60.5 min e 30.1 min).
         De acordo com a implementação atual, o sistema considera
         transações até 60.5 min como dentro da janela de 60 min,
         portanto há 11 transações e o bloqueio é ativado.
->>>>>>> actividade5-fraud
         """
         current_transaction = Transaction(500.0, self.now, "Brasil")
         previous_transactions = [
@@ -319,11 +268,7 @@ class TestFraudDetectionSystem:
 
         result = self.system.check_for_fraud(current_transaction, previous_transactions, blacklisted_locations)
 
-<<<<<<< HEAD
-        # De acordo com a lógica atual: 11 txs → bloqueia
-=======
         # De acordo com a lógica atual: 11 txs → bloqueia, não é fraude
->>>>>>> actividade5-fraud
         assert result.is_blocked is True
         assert result.is_fraudulent is False
         assert result.risk_score == 30
@@ -350,15 +295,9 @@ class TestFraudDetectionSystem:
             for _ in range(10)
         ])
 
-<<<<<<< HEAD
-        blacklisted_locations = []
-
-        result = self.system.check_for_fraud(current_transaction, previous_transactions, blacklisted_locations)
-=======
         result = self.system.check_for_fraud(current_transaction,
                                              previous_transactions,
                                              self.blacklisted_locations)
->>>>>>> actividade5-fraud
 
         # Original: R2 (Não bloqueia, 0 txs), R3 (Não é fraude)
         assert result.is_blocked is False
